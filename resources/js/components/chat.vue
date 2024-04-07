@@ -96,8 +96,7 @@ export default {
             newMessage,
             addMessage,
             fetchMessages,
-            scrollBottom,
-            hasScrolledToBottom         
+            hasScrolledToBottom       
         }
     }
 }
