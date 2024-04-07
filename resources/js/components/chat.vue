@@ -43,29 +43,15 @@ export default {
         let messages = ref([])
         let newMessage = ref('')
         let hasScrolledToBottom = ref('')
-
-        onMounted(() => {
-            fetchMessages()
-        })
-
-        onUpdated(() => {
-            scrollBottom()
-        })
-
-        Echo.private('chat-channel')
-            .listen('SendMessage', (e) => {
-                messages.value.push({
-                    message: e.message.message,
-                    user: e.user
-                });
-            });
-
-
-
+        
         const fetchMessages = async () => {
-            axios.get('/messages').then(response => {
+            try {
+                const response = await axios.get('/messages');
                 messages.value = response.data;
-            });
+                scrollBottom();
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            }
         }
 
         const addMessage = async () => {
@@ -74,10 +60,14 @@ export default {
                 message: newMessage.value
             };
             messages.value.push(user_message);
-            axios.post('/messages', user_message).then(response => {
+            try {
+                const response = await axios.post('/messages', user_message);
                 console.log(response.data);
-            });
-            newMessage.value = ''
+            } catch (error) {
+                console.error('Error adding message:', error);
+            }
+            newMessage.value = '';
+            scrollBottom();
         }
 
         const scrollBottom = () => {
@@ -87,12 +77,27 @@ export default {
             }
         }
 
+        onMounted(() => {
+            fetchMessages();
+            setInterval(fetchMessages, 5000); 
+        });
+
+        Echo.private('chat-channel')
+            .listen('SendMessage', (e) => {
+                messages.value.push({
+                    message: e.message.message,
+                    user: e.user
+                });
+                scrollBottom();
+            });
+
         return {
             messages,
             newMessage,
             addMessage,
             fetchMessages,
-            hasScrolledToBottom
+            scrollBottom,
+            hasScrolledToBottom         
         }
     }
 }
